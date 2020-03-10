@@ -10,4 +10,5 @@ class CovidReportApplicationTests {
 	void contextLoads() {
 	}
 
+
 }

@@ -7,7 +7,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -23,8 +22,8 @@ import com.example.covidreport.models.LocationStats;
 @Service
 public class CovidDataService {
 
-	private static String COVID_URL = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv";
-	private static String DEATH_URL = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv";
+	private static String COVID_URL = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv";
+	private static String DEATH_URL = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv";
 	private static String RECOVER_URL = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv";
 	private List<LocationStats> list = new ArrayList<>();
 
@@ -60,14 +59,26 @@ public class CovidDataService {
 			LocationStats locationStats = new LocationStats();
 			locationStats.setState(record.get("Province/State"));
 			locationStats.setCountry(record.get("Country/Region"));
-			locationStats.setTotalCases(Integer.parseInt(record.get(record.size() - 1)));
+			
+			String latestCases = record.get(record.size() - 1);
+			String prevCases = record.get(record.size() - 2);
+			System.out.println("here: " + latestCases + prevCases);
+			
+			if (latestCases.equals("")) latestCases = "0";
+			if (prevCases.equals("")) prevCases = "0";
+			
+			locationStats.setTotalCases(Integer.parseInt(latestCases));
 			locationStats.setDiff(
-					Integer.parseInt(record.get(record.size() - 1)) - Integer.parseInt(record.get(record.size() - 2)));
+					Integer.parseInt(latestCases) - Integer.parseInt(prevCases));
 
 			for (CSVRecord death : deaths) {
 				if (death.get("Province/State").equals(record.get("Province/State"))
 						&& death.get("Country/Region").equals(record.get("Country/Region"))) {
-					locationStats.setTotalDeaths(Integer.parseInt(death.get(death.size() - 1)));
+					
+					String latestDeaths = death.get(death.size() - 1);
+					if (latestDeaths.equals("")) latestDeaths = "0";
+					
+					locationStats.setTotalDeaths(Integer.parseInt(latestDeaths));
 					break;
 				}
 			}
@@ -75,7 +86,11 @@ public class CovidDataService {
 			for (CSVRecord recover : recovers) {
 				if (recover.get("Province/State").equals(record.get("Province/State"))
 						&& recover.get("Country/Region").equals(record.get("Country/Region"))) {
-					locationStats.setTotalRecovered(Integer.parseInt(recover.get(recover.size() - 1)));
+					
+					String latestRecovers = recover.get(recover.size() - 1);
+					if (latestRecovers.equals("")) latestRecovers = "0";
+					
+					locationStats.setTotalRecovered(Integer.parseInt(latestRecovers));
 					break;
 				}
 			}
